@@ -20,7 +20,7 @@ Strict MVC (Model-View-Controller) with native ES Modules (`"type": "module"` in
 1. Environment Check: Verify `ffmpeg` exists in system PATH before allowing searches; exit cleanly with instructions if missing.
 2. Cross-Platform Directory: Automatically resolve and create `Downloads/MusicDownloads` inside the user's home directory.
 3. Metadata-Only Search: Query YouTube using `yt-dlp` without downloading media chunks, returning title, channel, duration, and URL.
-4. Selection View: Interactive terminal checklist allowing single or multi-select with spacebar and confirmation with Enter.
+4. Selection View: Interactive terminal checklist allowing single or multi-select with 'd' key, Esc to navigate back, and confirmation with Enter.
 5. Audio Quality: Best audio stream converted to MP3 using VBR 0 (~320kbps) with metadata tags preserved.
 6. Sanitization & Safety: Strip illegal filesystem characters (`<>:"/\|?*`) from track titles before writing to disk.
 7. Concurrency: Process batch downloads with a limit of 2 concurrent downloads.

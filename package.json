@@ -1,6 +1,6 @@
 {
   "name": "mscfetch",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Interactive terminal music search and batch MP3 downloader",
   "main": "./bin/index.js",
   "bin": {

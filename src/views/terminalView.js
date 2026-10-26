@@ -1,10 +1,19 @@
-import { input, checkbox, confirm, select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import ora from 'ora';
+import {
+  customCheckbox,
+  customInput,
+  customSelect,
+  customConfirm,
+  BACK_ACTION,
+} from './customPrompts.js';
 
-export async function promptSearchQuery() {
-  return await input({
-    message: chalk.cyan('Enter search query (artist or song):'),
+export { BACK_ACTION };
+
+export async function promptSearchQuery(canGoBack = false) {
+  const escHint = canGoBack ? 'Esc to go back' : 'Esc to exit';
+  return await customInput({
+    message: chalk.cyan(`Enter search query (artist or song) [${escHint}]:`),
     validate: (value) => value.trim().length > 0 || 'Query cannot be empty',
   });
 }
@@ -16,8 +25,8 @@ export async function promptTrackSelection(tracks) {
     checked: false, // Default to unchecked per user preference
   }));
 
-  return await checkbox({
-    message: chalk.cyan('Select tracks to add to queue (Space to toggle, Enter to confirm):'),
+  return await customCheckbox({
+    message: chalk.cyan("Select tracks to add to queue ('d' to toggle, Enter to confirm, Esc to go back):"),
     choices,
   });
 }
@@ -47,8 +56,8 @@ export async function promptQueueAction(queue) {
     value: 'exit',
   });
 
-  return await select({
-    message: chalk.cyan('Queue Menu - choose action:'),
+  return await customSelect({
+    message: chalk.cyan('Queue Menu - choose action (Esc to exit):'),
     choices,
   });
 }
@@ -67,7 +76,7 @@ export function displayQueueSummary(queue) {
 }
 
 export async function promptContinue() {
-  return await confirm({
+  return await customConfirm({
     message: chalk.cyan('Would you like to start another search session?'),
     default: true,
   });

@@ -10,6 +10,7 @@ import {
   displayQueueSummary,
   promptContinue,
   createSpinner,
+  BACK_ACTION,
 } from '../views/terminalView.js';
 import chalk from 'chalk';
 
@@ -21,22 +22,42 @@ export async function runController() {
 
   let queue = [];
   let isRunning = true;
+  let currentScreen = 'search';
+  let canGoBackFromSearch = false;
 
   while (isRunning) {
     try {
-      const query = await promptSearchQuery();
-      const spinner = createSpinner('Searching YouTube...').start();
-      let tracks;
-      try {
-        tracks = await searchTracks(query);
-      } finally {
-        spinner.stop();
-      }
+      if (currentScreen === 'search') {
+        const query = await promptSearchQuery(canGoBackFromSearch);
+        if (query === BACK_ACTION) {
+          if (canGoBackFromSearch) {
+            currentScreen = 'queue_menu';
+            continue;
+          } else {
+            isRunning = false;
+            break;
+          }
+        }
 
-      if (!tracks || tracks.length === 0) {
-        console.log(chalk.yellow('No tracks found for your query.'));
-      } else {
+        const spinner = createSpinner('Searching YouTube...').start();
+        let tracks;
+        try {
+          tracks = await searchTracks(query);
+        } finally {
+          spinner.stop();
+        }
+
+        if (!tracks || tracks.length === 0) {
+          console.log(chalk.yellow('No tracks found for your query.'));
+          continue;
+        }
+
         const selected = await promptTrackSelection(tracks);
+        if (selected === BACK_ACTION) {
+          console.log(chalk.gray('\nTrack selection canceled.'));
+          continue;
+        }
+
         if (selected.length > 0) {
           const newTracks = selected.filter(
             (item) => !queue.some((q) => q.id === item.id || q.url === item.url)
@@ -51,16 +72,20 @@ export async function runController() {
         } else {
           console.log(chalk.yellow('\nNo tracks selected from this search.'));
         }
-      }
 
-      // Queue decision loop: allow searching again, downloading, clearing, or exiting
-      let deciding = true;
-      while (deciding) {
+        currentScreen = 'queue_menu';
+      } else if (currentScreen === 'queue_menu') {
         displayQueueSummary(queue);
         const action = await promptQueueAction(queue);
 
+        if (action === BACK_ACTION || action === 'exit') {
+          isRunning = false;
+          break;
+        }
+
         if (action === 'search') {
-          deciding = false; // loops back to promptSearchQuery
+          currentScreen = 'search';
+          canGoBackFromSearch = true;
         } else if (action === 'download') {
           if (queue.length === 0) {
             console.log(chalk.yellow('Queue is empty. Search and select tracks first.'));
@@ -90,16 +115,18 @@ export async function runController() {
 
           downloadSpinner.stop();
           console.log(chalk.green(`\n✔ All downloads saved to: ${getDownloadDir()}`));
-          queue = []; // Reset queue after download
-          deciding = false;
+          queue = [];
 
-          isRunning = await promptContinue();
+          const continueSession = await promptContinue();
+          if (continueSession) {
+            currentScreen = 'search';
+            canGoBackFromSearch = false;
+          } else {
+            isRunning = false;
+          }
         } else if (action === 'clear') {
           queue = [];
           console.log(chalk.yellow('\nQueue cleared.'));
-        } else if (action === 'exit') {
-          deciding = false;
-          isRunning = false;
         }
       }
     } catch (error) {
@@ -109,7 +136,13 @@ export async function runController() {
       }
       console.error(chalk.red(`Error: ${error.message}`));
       try {
-        isRunning = await promptContinue();
+        const continueSession = await promptContinue();
+        if (continueSession) {
+          currentScreen = 'search';
+          canGoBackFromSearch = queue.length > 0;
+        } else {
+          break;
+        }
       } catch (promptError) {
         if (promptError?.name === 'ExitPromptError') break;
         throw promptError;

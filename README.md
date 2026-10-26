@@ -72,7 +72,7 @@ If FFmpeg is not already installed, `mscfetch` will automatically detect your OS
 ? Enter search query (artist or song): Green Day Wake Me Up When September Ends
 ✔ Found tracks
 
-? Select tracks to add to queue (Space to toggle, Enter to confirm):
+? Select tracks to add to queue ('d' to toggle, Enter to confirm, Esc to go back):
   [ ] Green Day - Wake Me Up When September Ends (Green Day - 4:45)
   [x] Green Day - Wake Me Up When September Ends [Official Video] (4:45)
 
