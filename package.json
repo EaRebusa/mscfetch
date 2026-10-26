@@ -1,0 +1,40 @@
+{
+  "name": "mscfetch",
+  "version": "1.0.1",
+  "description": "Interactive terminal music search and batch MP3 downloader",
+  "main": "./bin/index.js",
+  "bin": {
+    "mscfetch": "bin/index.js",
+    "music-fetch": "bin/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EaRebusa/mscfetch.git"
+  },
+  "files": [
+    "bin",
+    "src",
+    "index.js",
+    "README.md"
+  ],
+  "type": "module",
+  "scripts": {
+    "start": "node ./bin/index.js"
+  },
+  "keywords": [
+    "music",
+    "downloader",
+    "mp3",
+    "cli",
+    "yt-dlp",
+    "mscfetch"
+  ],
+  "author": "EaRebusa",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^8.7.4",
+    "chalk": "^6.0.1",
+    "ora": "^9.4.1",
+    "yt-dlp-exec": "^1.0.2"
+  }
+}
