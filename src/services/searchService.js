@@ -1,7 +1,7 @@
 import ytDlp from 'yt-dlp-exec';
 import { Track } from '../models/track.js';
 
-export async function searchTracks(query, maxResults = 8) {
+export async function searchTracks(query, maxResults = 20) {
   if (!query || typeof query !== 'string' || query.trim().length === 0) {
     throw new Error('Valid search query required');
   }

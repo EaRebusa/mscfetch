@@ -65,12 +65,14 @@ export async function runController() {
           const duplicates = selected.length - newTracks.length;
           queue.push(...newTracks);
 
-          const dupMsg = duplicates > 0 ? chalk.gray(` (${duplicates} duplicate(s) omitted)`) : '';
+          const dupMsg = duplicates > 0 ? chalk.dim(` (${duplicates} duplicate(s) omitted)`) : '';
           console.log(
-            chalk.green(`\n✔ Added ${newTracks.length} track(s) to queue.${dupMsg} Total in queue: ${queue.length}`)
+            chalk.hex('#10b981')(
+              `\n✔ Added ${chalk.bold(newTracks.length)} track(s) to queue.${dupMsg} Total queued: ${chalk.bold(queue.length)}`
+            )
           );
         } else {
-          console.log(chalk.yellow('\nNo tracks selected from this search.'));
+          console.log(chalk.hex('#f59e0b')('\nNo tracks selected from this search.'));
         }
 
         currentScreen = 'queue_menu';
@@ -88,33 +90,33 @@ export async function runController() {
           canGoBackFromSearch = true;
         } else if (action === 'download') {
           if (queue.length === 0) {
-            console.log(chalk.yellow('Queue is empty. Search and select tracks first.'));
+            console.log(chalk.hex('#f59e0b')('Queue is empty. Search and select tracks first.'));
             continue;
           }
 
-          console.log(chalk.cyan(`\nStarting batch download of ${queue.length} track(s)...`));
-          const downloadSpinner = createSpinner('Initializing downloads...').start();
+          console.log(chalk.hex('#38bdf8')(`\n⬇️  Starting batch download of ${queue.length} track(s)...`));
+          const downloadSpinner = createSpinner('Initializing audio stream...').start();
 
           let completedCount = 0;
           const total = queue.length;
           await downloadBatch(queue, (update) => {
             if (update.status === 'started') {
-              downloadSpinner.text = `Downloading (${update.index + 1}/${total}): ${update.track.title}`;
+              downloadSpinner.text = `[${update.index + 1}/${total}] Fetching: ${update.track.title}`;
             } else if (update.status === 'completed') {
               completedCount++;
               if (update.result.success) {
-                downloadSpinner.succeed(chalk.green(`Downloaded: ${update.track.title}`));
+                downloadSpinner.succeed(chalk.hex('#10b981')(`[${update.index + 1}/${total}] Downloaded: ${update.track.title}`));
               } else {
-                downloadSpinner.fail(chalk.red(`Failed: ${update.track.title} - ${update.result.error}`));
+                downloadSpinner.fail(chalk.hex('#ef4444')(`[${update.index + 1}/${total}] Failed: ${update.track.title} (${update.result.error})`));
               }
               if (completedCount < total) {
-                downloadSpinner.start('Processing downloads...');
+                downloadSpinner.start('Processing next track...');
               }
             }
           });
 
           downloadSpinner.stop();
-          console.log(chalk.green(`\n✔ All downloads saved to: ${getDownloadDir()}`));
+          console.log(chalk.hex('#10b981')(`\n✔ Completed! All files saved to: ${chalk.bold(getDownloadDir())}`));
           queue = [];
 
           const continueSession = await promptContinue();
@@ -126,15 +128,15 @@ export async function runController() {
           }
         } else if (action === 'clear') {
           queue = [];
-          console.log(chalk.yellow('\nQueue cleared.'));
+          console.log(chalk.hex('#f59e0b')('\n✔ Queue cleared.'));
         }
       }
     } catch (error) {
       if (error?.name === 'ExitPromptError') {
-        console.log(chalk.gray('\nOperation canceled.'));
+        console.log(chalk.dim('\nOperation canceled.'));
         break;
       }
-      console.error(chalk.red(`Error: ${error.message}`));
+      console.error(chalk.hex('#ef4444')(`Error: ${error.message}`));
       try {
         const continueSession = await promptContinue();
         if (continueSession) {
@@ -150,5 +152,5 @@ export async function runController() {
     }
   }
 
-  console.log(chalk.magenta('\nThank you for using Music Fetcher CLI!\n'));
+  console.log(chalk.hex('#38bdf8')('\nThanks for using MSCFETCH!\n'));
 }

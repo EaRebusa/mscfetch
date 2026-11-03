@@ -32,7 +32,7 @@ export function isEscapeKey(key) {
 }
 
 export function isToggleKey(key) {
-  return key.name === 'd' || key.name === 'D';
+  return key.name === 'space' || key.name === 'd' || key.name === 'D';
 }
 
 // ---------------------------------------------------------
@@ -117,6 +117,7 @@ export const customCheckbox = createPrompt((config, done) => {
   const theme = makeTheme(checkboxTheme, config.theme);
   const { keybindings } = theme;
   const [status, setStatus] = useState('idle');
+  const [showHelp, setShowHelp] = useState(false);
   const prefix = usePrefix({ status, theme });
   const [items, setItems] = useState(normalizeCheckboxChoices(config.choices));
   const isCancelledRef = useRef(false);
@@ -135,6 +136,11 @@ export const customCheckbox = createPrompt((config, done) => {
 
   useKeypress(async (key) => {
     if (status !== 'idle') return;
+
+    if (key.name === '?' || key.sequence === '?') {
+      setShowHelp((prev) => !prev);
+      return;
+    }
 
     if (isEscapeKey(key)) {
       isCancelledRef.current = true;
@@ -210,7 +216,7 @@ export const customCheckbox = createPrompt((config, done) => {
       if (Separator.isSeparator(item)) {
         return ` ${item.separator}`;
       }
-      const cursor = isActive ? theme.icon.cursor : ' ';
+      const cursor = isActive ? styleText('cyan', `${figures.pointer} `) : '  ';
       if (item.disabled) {
         const disabledLabel = typeof item.disabled === 'string' ? item.disabled : '(disabled)';
         const checkbox = item.checked
@@ -221,10 +227,11 @@ export const customCheckbox = createPrompt((config, done) => {
       if (isActive) {
         description = item.description;
       }
-      const checkbox = item.checked ? theme.icon.checked : theme.icon.unchecked;
+      const checkbox = item.checked
+        ? styleText('green', `${figures.circleFilled} `)
+        : styleText('dim', `${figures.circle} `);
       const name = item.checked ? item.checkedName : item.name;
-      const color = isActive ? theme.style.highlight : (x) => x;
-      return color(`${cursor}${checkbox} ${name}`);
+      return `${cursor}${checkbox}${name}`;
     },
     pageSize,
     loop,
@@ -239,23 +246,45 @@ export const customCheckbox = createPrompt((config, done) => {
     return [prefix, message, answer].filter(Boolean).join(' ');
   }
 
+  const selectedCount = items.filter(isChecked).length;
   const keys = [
-    ['↑↓', 'navigate'],
-    ['d', 'toggle'],
+    ['Space/d', 'toggle'],
+    ['a', 'all'],
+    ['⏎', 'queue'],
+    ['?', 'help'],
+    ['esc', 'back'],
   ];
-  if (shortcuts.all) keys.push([shortcuts.all, 'all']);
-  if (shortcuts.invert) keys.push([shortcuts.invert, 'invert']);
-  keys.push(['esc', 'back']);
-  keys.push(['⏎', 'submit']);
   const helpLine = theme.style.keysHelpTip(keys);
+  const counterBadge = styleText('cyan', `[${selectedCount}/${items.length} selected]`);
+  const footerBar = `${helpLine}  ${counterBadge}`;
+
+  const helpModal = showHelp
+    ? '\n' +
+      [
+        styleText('cyan', '  ╭───────────────────── Cheatsheet ─────────────────────╮'),
+        styleText('cyan', '  │ ') + styleText('bold', '[↑ / ↓]') + styleText('dim', '       Navigate tracks                         ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[Space / d]') + styleText('dim', '   Toggle track selection                  ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[a]') + styleText('dim', '           Select all / clear all                  ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[i]') + styleText('dim', '           Invert selection                        ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[1-9]') + styleText('dim', '         Toggle 1st-9th track directly           ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[Enter]') + styleText('dim', '       Confirm and add selected to queue       ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[Esc]') + styleText('dim', '         Back / Cancel                           ') + styleText('cyan', '│'),
+        styleText('cyan', '  │ ') + styleText('bold', '[?]') + styleText('dim', '           Hide cheatsheet                         ') + styleText('cyan', '│'),
+        styleText('cyan', '  ╰─────────────────────────────────────────────────────╯'),
+      ].join('\n')
+    : '';
+
+  const tableHeader = config.tableHeader ? `${config.tableHeader}\n` : '';
 
   const lines = [
     [prefix, message].filter(Boolean).join(' '),
+    tableHeader,
     page,
     ' ',
     description ? theme.style.description(description) : '',
     errorMsg ? theme.style.error(errorMsg) : '',
-    helpLine,
+    footerBar,
+    helpModal,
   ]
     .filter(Boolean)
     .join('\n')
